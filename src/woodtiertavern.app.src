@@ -7,10 +7,11 @@
     stdlib,
     jsx,
     inets,
-    ssl
+    ssl,
+    gun
    ]},
   {env,[]},
-  {modules, [game_fetcher]},
+  {modules, [game_fetcher, specs_fetcher]},
   {licenses, ["Apache 2.0"]},
   {links, []}
  ]}.

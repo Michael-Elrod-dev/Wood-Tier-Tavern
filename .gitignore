@@ -1,6 +1,5 @@
-notes.txt
-RiotAPI.txt
-API_KEY.txt
+*.txt
+
 rebar.lock
 
 _build/
