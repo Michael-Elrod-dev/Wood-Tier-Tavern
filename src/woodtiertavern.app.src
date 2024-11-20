@@ -1,0 +1,16 @@
+{application, woodtiertavern,
+ [{description, "Wood Tier Tavern Application"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib,
+    jsx,
+    inets,
+    ssl
+   ]},
+  {env,[]},
+  {modules, [game_fetcher]},
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.
