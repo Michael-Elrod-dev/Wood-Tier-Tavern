@@ -1,0 +1,16 @@
+{
+    "name": "league-player-collector",
+    "version": "1.0.0",
+    "description": "Collects League of Legends player data",
+    "main": "collectPlayers.js",
+    "scripts": {
+        "start": "node collectPlayers.js"
+    },
+    "dependencies": {
+        "axios": "^1.7.8",
+        "https": "^1.0.0"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}
