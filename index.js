@@ -3,7 +3,6 @@ const { GameFetcher } = require('./gameFetcher');
 const { PlayerCollector } = require('./playerCollector');
 
 async function main() {
-    // You can choose which functionality to run
     const fetcher = new GameFetcher();
     const collector = new PlayerCollector();
 

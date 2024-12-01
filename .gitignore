@@ -1,5 +1,4 @@
-*.txt
+files/
 node_modules/
-rebar.lock
-
-_build/
+*.json
+*.txt

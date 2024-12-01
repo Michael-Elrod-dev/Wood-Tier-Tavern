@@ -1,18 +1,16 @@
+// leagueClient.js
 const axios = require('axios');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { findLockFile, delay } = require('./utils');
 
 class LeagueClient {
     async startSpectate(gameInfo) {
-        console.log('\n=== Starting Spectate Process ===');
-        console.log('Game Info received:', JSON.stringify(gameInfo, null, 2));
+        console.log('Game Info retrieved:', JSON.stringify(gameInfo, null, 2));
         
         try {
-            console.log('Attempting to connect to League Client...');
-            const credentials = await this.attemptClientConnect(3);
-            console.log('Successfully connected to League Client');
-            
+            const credentials = await this.attemptClientConnect(3);            
             return this.launchSpectate(credentials, gameInfo);
         } catch (error) {
             console.error('Spectate startup error:', error.message);
@@ -26,34 +24,14 @@ class LeagueClient {
         try {
             return await this.connectToClient();
         } catch (error) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await delay(2000);
             return this.attemptClientConnect(attempts - 1);
         }
     }
 
-    findLockFile() {
-        const possiblePaths = [
-            'C:\\Riot Games\\League of Legends',
-            'D:\\Riot Games\\League of Legends',
-            'C:\\Program Files\\Riot Games\\League of Legends',
-            'C:\\Program Files (x86)\\Riot Games\\League of Legends'
-        ];
-
-        for (const basePath of possiblePaths) {
-            const lockfilePath = path.join(basePath, 'lockfile');
-            console.log('Checking path:', lockfilePath);
-            if (fs.existsSync(lockfilePath)) {
-                console.log('Found lockfile at:', lockfilePath);
-                return lockfilePath;
-            }
-        }
-
-        throw new Error('Lockfile not found');
-    }
-
     async connectToClient() {
         try {
-            const lockfilePath = this.findLockFile();
+            const lockfilePath = findLockFile();
             const lockfileContent = fs.readFileSync(lockfilePath, 'utf8');
             console.log('Lockfile content:', lockfileContent);
 
@@ -69,7 +47,7 @@ class LeagueClient {
         }
     }
 
-    async makeRequest(credentials, method, endpoint, data = null) {
+    async makeRequest(credentials, method, endpoint, payload = null) {
         const url = `https://127.0.0.1:${credentials.port}${endpoint}`;
         const auth = Buffer.from(`riot:${credentials.auth}`).toString('base64');
         
@@ -86,7 +64,7 @@ class LeagueClient {
             httpsAgent: new https.Agent({
                 rejectUnauthorized: false
             }),
-            data
+            data: payload
         };
     
         try {
@@ -104,14 +82,31 @@ class LeagueClient {
     }
 
     async launchSpectate(credentials, gameInfo) {
-        console.log('\n=== Launching Spectate Mode ===');
+        console.log('\n=== Launching Spectate ===');
+        const riotId = `${gameInfo.gameName}#${gameInfo.tagLine}`;
         
         try {
+            // URL encode the entire Riot ID (name#tag format)
+            const encodedRiotId = encodeURIComponent(`${gameInfo.gameName}#${gameInfo.tagLine}`);
+            console.log('Getting internal summoner info for:', riotId);
+            
+            const summonerData = await this.makeRequest(
+                credentials,
+                'GET',
+                `/lol-summoner/v1/summoners?name=${encodedRiotId}`
+            );
+            
+            console.log('Internal summoner data:', summonerData);
+            
+            if (!summonerData || !summonerData.puuid) {
+                throw new Error('Could not find internal PUUID for player');
+            }
+    
             const payload = {
                 dropInSpectateGameId: gameInfo.gameId.toString(),
-                gameQueueType: "string", // We might need to confirm the exact format expected here
-                allowObserveMode: "string", // And here too
-                puuid: gameInfo.puuid
+                gameQueueType: "RANKED_SOLO_5x5",
+                allowObserveMode: "ALL",
+                puuid: summonerData.puuid
             };
     
             console.log('\nPrepared spectate payload:', JSON.stringify(payload, null, 2));
@@ -127,10 +122,11 @@ class LeagueClient {
             return response;
         } catch (error) {
             console.error('\n=== Spectate Launch Error ===');
-            console.error('Error Details:', {
-                message: error.message,
+            console.error('Full error:', {
                 status: error.response?.status,
-                data: error.response?.data
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                message: error.message
             });
             throw error;
         }

@@ -1,35 +1,21 @@
+const path = require('path');
 const axios = require('axios');
 const fs = require('fs/promises');
-const path = require('path');
+const { getApiKey, delay, writeJsonToFile, getRiotHeaders, updateProgress } = require('./utils');
 
 class PlayerCollector {
     constructor() {
         this.API_KEY = null;
         this.BASE_URL = 'https://na1.api.riotgames.com';
+        this.RIOT_URL = 'https://americas.api.riotgames.com';
         this.DIVISIONS = ['I', 'II', 'III', 'IV'];
         this.DELAY_BETWEEN_REQUESTS = 1500;
     }
 
-    async getApiKey() {
-        try {
-            this.API_KEY = (await fs.readFile('api_key.txt', 'utf8')).trim();
-        } catch (error) {
-            throw new Error('API key not found in config/api_key.txt');
-        }
-    }
-
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
     async start() {
         try {
-            await this.getApiKey();
-            try {
-                await fs.mkdir('files', { recursive: true });
-            } catch (err) {
-                if (err.code !== 'EEXIST') throw err;
-            }
+            this.API_KEY = await getApiKey();
+            await fs.mkdir('files', { recursive: true });
             await this.collectPlayers();
         } catch (error) {
             console.error('Failed to start:', error.message);
@@ -43,67 +29,66 @@ class PlayerCollector {
     }
 
     async collectDivision(division) {
-        const filename = path.join('files', `iron_${division.toLowerCase()}_players.txt`);
-        console.log(`Collecting Iron ${division} players...`);
-
-        const url = `${this.BASE_URL}/lol/league/v4/entries/RANKED_SOLO_5x5/IRON/${division}?page=1`;
-        const headers = { 
-            'X-Riot-Token': this.API_KEY,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Charset': 'application/x-www-form-urlencoded; charset=UTF-8'
-        };
+        const filename = path.join('files', `iron_${division.toLowerCase()}_players.json`);
+        console.log(`\nStarting Iron ${division} collection...`);
 
         try {
-            const response = await axios.get(url, { headers });
-            console.log(`Got ${response.data.length} players from Iron ${division}`);
-            
-            // Get both summoner ID and PUUID for each player
+            const summonerIds = await this.getSummonerIds(division);
+            await delay(this.DELAY_BETWEEN_REQUESTS);
+            console.log(`Found ${summonerIds.length} players in Iron ${division}`);
+
             const playerData = [];
-            for (const entry of response.data) {
+            let processed = 0;
+
+            for (const summonerId of summonerIds) {
                 try {
-                    await this.delay(this.DELAY_BETWEEN_REQUESTS); // Respect rate limits
-                    const summonerUrl = `${this.BASE_URL}/lol/summoner/v4/summoners/${entry.summonerId}`;
-                    const summonerResponse = await axios.get(summonerUrl, { headers });
+                    const puuid = await this.getPUUID(summonerId);
+                    await delay(this.DELAY_BETWEEN_REQUESTS);
+                    
+                    const accountInfo = await this.getGameNameAndTagLine(puuid);
+                    await delay(this.DELAY_BETWEEN_REQUESTS);
+                    
                     playerData.push({
-                        summonerId: entry.summonerId,
-                        puuid: summonerResponse.data.puuid
+                        summonerId,
+                        puuid,
+                        gameName: accountInfo.gameName,
+                        tagLine: accountInfo.tagLine
                     });
-                    console.log(`Retrieved data for summoner: ${entry.summonerId}`);
+                    
+                    processed++;
+                    updateProgress(processed, summonerIds.length, `Processing Iron ${division}`);
                 } catch (error) {
-                    console.error(`Failed to get PUUID for summoner ${entry.summonerId}:`, error.message);
+                    console.error(`\nError with summoner ${summonerId}:`, error.message);
                 }
             }
-            
-            // Format as CSV without space after comma for easier parsing
-            const formattedData = playerData.map(player => `${player.summonerId},${player.puuid}`);
-            
-            await this.writeToFile(filename, formattedData);
-            console.log(`Saved ${formattedData.length} players to ${filename}`);
+
+            console.log('\nSaving data...');
+            await writeJsonToFile(filename, playerData);
+            console.log(`Completed Iron ${division}: Saved ${playerData.length} players\n`);
         } catch (error) {
-            if (error.response) {
-                console.error(`API error getting Iron ${division} players:`, {
-                    status: error.response.status,
-                    data: error.response.data
-                });
-            } else {
-                console.error(`Network error getting Iron ${division} players:`, error.message);
-            }
+            console.error(`\nError processing Iron ${division}:`, error.message);
         }
     }
 
-    async writeToFile(filename, data) {
-        try {
-            if (!data || data.length === 0) {
-                console.error('No data to write to file');
-                return false;
-            }
-            await fs.writeFile(filename, data.join('\n'));
-            return true;
-        } catch (error) {
-            console.error(`Error saving to ${filename}:`, error.message);
-            return false;
-        }
+    async getSummonerIds(division) {
+        const url = `${this.BASE_URL}/lol/league/v4/entries/RANKED_SOLO_5x5/IRON/${division}?page=10`;
+        const response = await axios.get(url, { headers: getRiotHeaders(this.API_KEY) });
+        return response.data.map(entry => entry.summonerId);
+    }
+
+    async getPUUID(summonerId) {
+        const url = `${this.BASE_URL}/lol/summoner/v4/summoners/${summonerId}`;
+        const response = await axios.get(url, { headers: getRiotHeaders(this.API_KEY) });
+        return response.data.puuid;
+    }
+    
+    async getGameNameAndTagLine(puuid) {
+        const url = `${this.RIOT_URL}/riot/account/v1/accounts/by-puuid/${puuid}`;
+        const response = await axios.get(url, { headers: getRiotHeaders(this.API_KEY) });
+        return {
+            gameName: response.data.gameName,
+            tagLine: response.data.tagLine
+        };
     }
 }
 

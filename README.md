@@ -1,59 +1,89 @@
 # Wood Tier Tavern
 
-## Overview
-
-**Wood Tier Tavern** is an Erlang application designed to interact with Riot Games' League of Legends API to find and connect to active games involving low-ELO players (Iron rank). It fetches and processes data using API requests and provides functionality to interact with spectator services.
-
----
+A Node.js application that automatically finds and spectates ranked games of Iron-ranked players in League of Legends.
 
 ## Features
 
-- Fetches ranked player data from the Riot API.
-- Finds active games by querying summoner and match data.
-- Includes a customizable delay and limit for checking players.
-- Outputs relevant game details such as Game ID and encryption key.
+- Collects player data from Iron divisions I-IV
+- Monitors Iron players for active ranked games
+- Automatically launches the spectator mode when a suitable game is found
+- Integrates with the League Client for seamless spectating
 
----
+## Prerequisites
+
+- Node.js installed
+- League of Legends client installed
+- Valid Riot Games API key
+
+## Setup
+
+1. Create a file named `api_key.txt` in the root directory and paste your Riot Games API key
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
 ## Usage
 
-### Starting the Application
+The application has two main functionalities:
 
-Run the application using:
+### 1. Collecting Player Data
 
-```erlang
-game_fetcher:start().
+To collect Iron player data:
+
+```bash
+node index.js
 ```
-This will start all necessary dependencies (jsx, inets, ssl) and call the test_api/0 function to fetch data from the Riot API.
 
-### Configuration
-Update the following macros in the code as needed:
+This will:
+- Create a `files` directory
+- Collect player data from all Iron divisions
+- Save player information to separate files for each division
 
-- API Key: Replace "...“ in ?API_KEY with your valid Riot Games API Key.
-- Base URL: Adjust ?BASE_URL if using a region-specific endpoint.
-- Maximum Players to Check: Modify ?MAX_PLAYERS_TO_CHECK to control the number of players to analyze.
-- Delay Between Checks: Adjust ?DELAY_BETWEEN_CHECKS for the time (in milliseconds) between API calls.
+### 2. Finding and Spectating Games
 
-### Functions
-`start/0`
-- Initializes the application by starting dependencies and calling test_api/0.
+To find and spectate games:
+- Ensure League of Legends client is running
+- Uncomment the `fetcher.start()` line in `index.js`
+- Run:
+  ```bash
+  node index.js
+  ```
 
-`test_api/0`
-- Fetches Iron IV players from the Riot API and begins the process of finding active games.
+The application will:
+- Load collected player data
+- Check players for active ranked games
+- Automatically launch spectator mode when a suitable game is found
 
-`check_players/2`
-- Iterates through a list of players and checks for active games using their summonerId.
+## Files Structure
 
-`check_player_game/1`
-- Retrieves puuid and checks if the summoner is currently in an active game.
+- `index.js` - Main application entry point
+- `playerCollector.js` - Handles collection of Iron player data
+- `gameFetcher.js` - Finds active games among collected players
+- `leagueClient.js` - Manages interaction with the League client
+- `files/` - Directory containing collected player data
 
-`connect_to_game/1`
-- Outputs game details (GameId, EncryptionKey) for connecting to the spectator service. (To be implemented.)
+## Technical Details
 
-## Requirements
-Dependencies:
-- jsx for JSON parsing.
-- inets and ssl for HTTP and HTTPS requests.
+- Uses Riot Games API for player data collection and game monitoring
+- Interfaces with League Client API for spectating
+- Implements rate limiting to comply with API restrictions
+- Handles automatic authentication with the League client
 
-## License
-This project is licensed under the MIT License.
+## Error Handling
+
+- Gracefully handles API errors and rate limits
+- Retries League client connection if needed
+- Provides detailed error logging for troubleshooting
+
+## Notes
+
+- API requests are rate-limited to comply with Riot Games API restrictions
+- The application requires an active League client session for spectating
+- Player data collection and game spectating can be run separately
+
+## Limitations
+
+- Only works with NA region (can be modified for other regions)
+- Requires valid API key with appropriate rate limits
+- Only searches for ranked solo queue games
