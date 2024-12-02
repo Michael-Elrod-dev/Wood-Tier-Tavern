@@ -15,13 +15,9 @@ async function clearDatabase() {
 mongoose.connect(dbURI)
     .then(async () => {
         console.log('Connected to MongoDB');
-        // Clear database before tests
         await clearDatabase();
-        // Run tests
         await testUserAndGame();
-        // Clear database after tests
         await clearDatabase();
-        // Disconnect
         await mongoose.connection.close();
         console.log('Tests completed and database cleaned');
         process.exit(0);
@@ -64,7 +60,6 @@ async function testUserAndGame() {
     }
 }
 
-// Graceful shutdown
 process.on('SIGINT', async () => {
     await mongoose.connection.close();
     process.exit(0);

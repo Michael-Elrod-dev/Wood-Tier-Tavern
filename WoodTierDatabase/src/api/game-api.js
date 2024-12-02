@@ -29,7 +29,6 @@ async function placeBet(username, team, amount) {
     if (!user) throw new Error('User not found');
     if (user.balance < amount) throw new Error('Insufficient balance');
 
-    // Update game with new bet
     const updateData = {
         $inc: {
             [`${team}Team.totalBets`]: amount,
@@ -45,7 +44,6 @@ async function placeBet(username, team, amount) {
         }
     };
 
-    // Update game and user atomically
     const [updatedGame] = await Promise.all([
         Game.findByIdAndUpdate(game._id, updateData, { new: true }),
         User.findOneAndUpdate(
@@ -86,11 +84,9 @@ async function endGame(gameId, winningTeam) {
     if (!game) throw new Error('Game not found');
     if (game.status === 'completed') throw new Error('Game already completed');
 
-    // Calculate payouts
     const totalPot = game.blueTeam.totalBets + game.redTeam.totalBets;
     const winningPot = game[`${winningTeam}Team`].totalBets;
     
-    // Process all winning bets
     const winningBets = game.bets.filter(bet => bet.team === winningTeam);
     for (const bet of winningBets) {
         const payout = (bet.amount / winningPot) * totalPot;
@@ -100,13 +96,10 @@ async function endGame(gameId, winningTeam) {
         );
     }
 
-    // Update game status
     game.status = 'completed';
     game.winner = winningTeam;
     game.endTime = new Date();
     await game.save();
-
-    // Create new game automatically
     await createGame();
 
     return game;
@@ -129,7 +122,7 @@ async function getGameStats(gameId) {
             numberOfBettors: game.redTeam.numberOfBettors
         },
         winner: game.winner,
-        duration: game.endTime ? (game.endTime - game.startTime) / 1000 : null, // in seconds
+        duration: game.endTime ? (game.endTime - game.startTime) / 1000 : null,
         betsCount: game.bets.length
     };
 }

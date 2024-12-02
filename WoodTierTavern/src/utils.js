@@ -3,7 +3,6 @@ const fs = require('fs/promises');
 const fsSync = require('fs');
 const path = require('path');
 
-// API Key Management
 async function getApiKey() {
     try {
         const API_KEY = (await fs.readFile('files/api_key.txt', 'utf8')).trim();
@@ -13,12 +12,10 @@ async function getApiKey() {
     }
 }
 
-// Common delay function
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// League Client utility functions
 function findLockFile() {
     const possiblePaths = [
         'C:\\Riot Games\\League of Legends',
@@ -36,7 +33,6 @@ function findLockFile() {
     throw new Error('Lockfile not found');
 }
 
-// File operations
 async function writeJsonToFile(filename, data) {
     try {
         if (!data || data.length === 0) {
@@ -52,7 +48,6 @@ async function writeJsonToFile(filename, data) {
     }
 }
 
-// List manipulation
 function shuffleList(list) {
     return list
         .map(value => ({ value, sort: Math.random() }))
@@ -60,14 +55,12 @@ function shuffleList(list) {
         .map(({ value }) => value);
 }
 
-// Console utilities
 function updateProgress(current, total, message) {
     process.stdout.clearLine(0);
     process.stdout.cursorTo(0);
     process.stdout.write(`${message}: ${current}/${total}`);
 }
 
-// API Headers
 function getRiotHeaders(apiKey) {
     return {
         'X-Riot-Token': apiKey,

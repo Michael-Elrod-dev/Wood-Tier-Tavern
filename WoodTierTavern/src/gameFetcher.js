@@ -99,8 +99,8 @@ class GameFetcher {
             if (gameInfo.found) {
                 const minutes = Math.floor(gameInfo.gameLength / 60);
                 const seconds = gameInfo.gameLength % 60;
+                
                 console.log(`\nFound active game! Game running for ${minutes}:${seconds.toString().padStart(2, '0')}. Attempting to spectate...`);
-                return;
                 
                 const leagueClient = new LeagueClient();
                 try {

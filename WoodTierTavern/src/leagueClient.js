@@ -86,7 +86,6 @@ class LeagueClient {
         const riotId = `${gameInfo.gameName}#${gameInfo.tagLine}`;
         
         try {
-            // URL encode the entire Riot ID (name#tag format)
             const encodedRiotId = encodeURIComponent(`${gameInfo.gameName}#${gameInfo.tagLine}`);
             console.log('Getting internal summoner info for:', riotId);
             

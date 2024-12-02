@@ -71,7 +71,6 @@ const gameSchema = new mongoose.Schema({
     }]
 });
 
-// Create models
 const User = mongoose.model('User', userSchema);
 const Game = mongoose.model('Game', gameSchema);
 

@@ -20,7 +20,6 @@ client.connect();
 
 async function onMessageHandler (target, context, msg, self) {
     if (self) { return; }
-
     const commandName = msg.trim().toLowerCase();
 
     if (commandName === 'hello') {

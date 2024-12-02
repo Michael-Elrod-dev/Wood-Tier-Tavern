@@ -7,10 +7,7 @@ async function main() {
     const collector = new PlayerCollector();
 
     try {
-        // First collect players if needed
         // await collector.start();
-        
-        // Then start looking for games
         await fetcher.start();
     } catch (error) {
         console.error('Error:', error.message);

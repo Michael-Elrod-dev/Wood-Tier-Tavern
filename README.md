@@ -1,89 +1,89 @@
-# Wood Tier Tavern
+# WoodTierTavern
 
-A Node.js application that automatically finds and spectates ranked games of Iron-ranked players in League of Legends.
+WoodTierTavern is a Twitch-based betting platform, allowing viewers to bet on live Iron-ranked League of Legends matches. The project automatically finds live Iron games, spectates them for streaming, and manages viewer betting through Twitch chat integration and a MongoDB backend.
 
-## Features
+## Project Structure
 
-- Collects player data from Iron divisions I-IV
-- Monitors Iron players for active ranked games
-- Automatically launches the spectator mode when a suitable game is found
-- Integrates with the League Client for seamless spectating
+The project consists of three main components:
 
-## Prerequisites
-
-- Node.js installed
-- League of Legends client installed
-- Valid Riot Games API key
-
-## Setup
-
-1. Create a file named `api_key.txt` in the root directory and paste your Riot Games API key
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-## Usage
-
-The application has two main functionalities:
-
-### 1. Collecting Player Data
-
-To collect Iron player data:
-
-```bash
-node index.js
+```
+WoodTierTavern/
+├── WoodTierTavern/     # Game finding and spectating
+├── WoodTierBookie/     # Twitch chat bot
+└── WoodTierDatabase/   # MongoDB backend
 ```
 
-This will:
-- Create a `files` directory
-- Collect player data from all Iron divisions
-- Save player information to separate files for each division
+### WoodTierTavern (Game Finder)
 
-### 2. Finding and Spectating Games
+This component handles finding and spectating Iron-ranked games using Riot's API and the League Client API (LCU). Key features:
 
-To find and spectate games:
-- Ensure League of Legends client is running
-- Uncomment the `fetcher.start()` line in `index.js`
-- Run:
-  ```bash
-  node index.js
-  ```
+- Player Collection: Gathers Iron-ranked player information across all divisions
+- Live Game Detection: Monitors collected players for active ranked games
+- Spectator Mode: Automatically launches the League client in spectator mode for streaming
+- API Integration: Interfaces with both Riot's public API and the League Client API
 
-The application will:
-- Load collected player data
-- Check players for active ranked games
-- Automatically launch spectator mode when a suitable game is found
+Key files:
+- `playerCollector.js`: Gathers Iron-ranked player information
+- `gameFetcher.js`: Monitors players for active games
+- `leagueClient.js`: Handles League client interaction for spectating
+- `utils.js`: Shared utility functions
 
-## Files Structure
+### WoodTierBookie (Twitch Bot)
 
-- `index.js` - Main application entry point
-- `playerCollector.js` - Handles collection of Iron player data
-- `gameFetcher.js` - Finds active games among collected players
-- `leagueClient.js` - Manages interaction with the League client
-- `files/` - Directory containing collected player data
+A Twitch chat bot that manages viewer interaction and betting. Features:
 
-## Technical Details
+- Chat Commands: Processes viewer betting commands
+- Token Management: Handles Twitch authentication
+- Real-time Interaction: Responds to viewer commands and updates
+- MongoDB Integration: Interfaces with database for user/bet management
 
-- Uses Riot Games API for player data collection and game monitoring
-- Interfaces with League Client API for spectating
-- Implements rate limiting to comply with API restrictions
-- Handles automatic authentication with the League client
+Key files:
+- `bot.js`: Main bot functionality and command handling
+- `tokenManager.js`: Manages Twitch authentication tokens
 
-## Error Handling
+### WoodTierDatabase (Backend)
 
-- Gracefully handles API errors and rate limits
-- Retries League client connection if needed
-- Provides detailed error logging for troubleshooting
+MongoDB database system managing all betting and user data. Features:
 
-## Notes
+- User Management: Tracks user balances, stats, and betting history
+- Game Tracking: Records game outcomes and betting information
+- Statistics: Maintains leaderboards and user achievements
+- Transaction Management: Handles bet placement and payouts
 
-- API requests are rate-limited to comply with Riot Games API restrictions
-- The application requires an active League client session for spectating
-- Player data collection and game spectating can be run separately
+Key files:
+- `schemas.js`: MongoDB schema definitions
+- `user-api.js`: User management endpoints
+- `game-api.js`: Game and betting endpoints
 
-## Limitations
+## User Features
 
-- Only works with NA region (can be modified for other regions)
-- Requires valid API key with appropriate rate limits
-- Only searches for ranked solo queue games
+- Betting on Iron-ranked games through Twitch chat
+- User progression system with ranks and achievements
+- Stats tracking (win rate, biggest wins, streaks, etc.)
+- Leaderboards and competitive elements
+- Different user types (viewer, subscriber, VIP, moderator)
+
+## Technical Implementation
+
+- Uses Riot Games API for player and game data
+- Integrates with League Client for spectating
+- Twitch API integration for chat bot functionality
+- MongoDB for persistent data storage
+- Node.js backend architecture
+
+## Current Status
+
+This project is currently under development. The core components are being built and tested independently before integration.
+
+## Note
+
+This repository is primarily for code reference and documentation. Due to the complexity of dependencies and required API keys (Riot Games, Twitch), it's not intended for direct downloading and running.
+
+## Requirements (if running locally)
+
+- Node.js
+- MongoDB
+- League of Legends Client
+- Riot Games API Key
+- Twitch Developer Account
+- Various npm packages
