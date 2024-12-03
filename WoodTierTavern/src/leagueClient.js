@@ -1,20 +1,18 @@
 // leagueClient.js
-const axios = require('axios');
-const https = require('https');
 const fs = require('fs');
-const path = require('path');
-const { findLockFile, delay } = require('./utils');
+const { findLockFile, delay, makeLcuRequest } = require('./utils');
 
 class LeagueClient {
     async startSpectate(gameInfo) {
-        console.log('Game Info retrieved:', JSON.stringify(gameInfo, null, 2));
+        // console.log('Game Info retrieved:', JSON.stringify(gameInfo, null, 2));
         
         try {
             const credentials = await this.attemptClientConnect(3);            
-            return this.launchSpectate(credentials, gameInfo);
+            await this.launchSpectate(credentials, gameInfo);
+            return credentials;
         } catch (error) {
             console.error('Spectate startup error:', error.message);
-            return { error: error.message };
+            throw error;
         }
     }
 
@@ -33,7 +31,7 @@ class LeagueClient {
         try {
             const lockfilePath = findLockFile();
             const lockfileContent = fs.readFileSync(lockfilePath, 'utf8');
-            console.log('Lockfile content:', lockfileContent);
+            // console.log('Lockfile content:', lockfileContent);
 
             const [, , port, password, protocol] = lockfileContent.split(':');
 
@@ -47,55 +45,20 @@ class LeagueClient {
         }
     }
 
-    async makeRequest(credentials, method, endpoint, payload = null) {
-        const url = `https://127.0.0.1:${credentials.port}${endpoint}`;
-        const auth = Buffer.from(`riot:${credentials.auth}`).toString('base64');
-        
-        console.log(`Making request to: ${url}`);
-        console.log('Using auth token:', auth);
-        
-        const config = {
-            method,
-            url,
-            headers: {
-                'Authorization': `Basic ${auth}`,
-                'Content-Type': 'application/json'
-            },
-            httpsAgent: new https.Agent({
-                rejectUnauthorized: false
-            }),
-            data: payload
-        };
-    
-        try {
-            const response = await axios(config);
-            return response.data;
-        } catch (error) {
-            console.log('Full error:', {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                message: error.message
-            });
-            throw new Error(`LCU request failed: ${error.response?.status} ${error.response?.statusText}`);
-        }
-    }
-
     async launchSpectate(credentials, gameInfo) {
         console.log('\n=== Launching Spectate ===');
-        const riotId = `${gameInfo.gameName}#${gameInfo.tagLine}`;
         
         try {
             const encodedRiotId = encodeURIComponent(`${gameInfo.gameName}#${gameInfo.tagLine}`);
-            console.log('Getting internal summoner info for:', riotId);
+            // console.log('Getting internal summoner info for:', riotId);
             
-            const summonerData = await this.makeRequest(
+            const summonerData = await makeLcuRequest(
                 credentials,
                 'GET',
                 `/lol-summoner/v1/summoners?name=${encodedRiotId}`
             );
             
-            console.log('Internal summoner data:', summonerData);
+            // console.log('Internal summoner data:', summonerData);
             
             if (!summonerData || !summonerData.puuid) {
                 throw new Error('Could not find internal PUUID for player');
@@ -108,16 +71,16 @@ class LeagueClient {
                 puuid: summonerData.puuid
             };
     
-            console.log('\nPrepared spectate payload:', JSON.stringify(payload, null, 2));
+            // console.log('\nPrepared spectate payload:', JSON.stringify(payload, null, 2));
             
-            const response = await this.makeRequest(
+            const response = await makeLcuRequest(
                 credentials,
                 'POST',
                 '/lol-spectator/v1/spectate/launch',
                 payload
             );
     
-            console.log('\nSpectate launch response:', JSON.stringify(response, null, 2));
+            // console.log('\nSpectate launch response:', JSON.stringify(response, null, 2));
             return response;
         } catch (error) {
             console.error('\n=== Spectate Launch Error ===');

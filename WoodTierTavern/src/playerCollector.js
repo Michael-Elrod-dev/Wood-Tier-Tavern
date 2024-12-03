@@ -1,7 +1,6 @@
 const path = require('path');
-const axios = require('axios');
 const fs = require('fs/promises');
-const { getApiKey, delay, writeJsonToFile, getRiotHeaders, updateProgress } = require('./utils');
+const { getApiKey, delay, writeJsonToFile, updateProgress, makeRiotRequest } = require('./utils');
 
 class PlayerCollector {
     constructor() {
@@ -15,7 +14,7 @@ class PlayerCollector {
     async start() {
         try {
             this.API_KEY = await getApiKey();
-            await fs.mkdir('files', { recursive: true });
+            await fs.mkdir('../files', { recursive: true });
             await this.collectPlayers();
         } catch (error) {
             console.error('Failed to start:', error.message);
@@ -29,7 +28,7 @@ class PlayerCollector {
     }
 
     async collectDivision(division) {
-        const filename = path.join('files', `iron_${division.toLowerCase()}_players.json`);
+        const filename = path.join('../files', `iron_${division.toLowerCase()}_players.json`);
         console.log(`\nStarting Iron ${division} collection...`);
 
         try {
@@ -71,23 +70,35 @@ class PlayerCollector {
     }
 
     async getSummonerIds(division) {
-        const url = `${this.BASE_URL}/lol/league/v4/entries/RANKED_SOLO_5x5/IRON/${division}?page=10`;
-        const response = await axios.get(url, { headers: getRiotHeaders(this.API_KEY) });
-        return response.data.map(entry => entry.summonerId);
+        const allSummonerIds = [];
+        let page = 1;
+        const maxPages = 25;
+    
+        while (page <= maxPages) {
+            const url = `${this.BASE_URL}/lol/league/v4/entries/RANKED_SOLO_5x5/IRON/${division}?page=${page}`;
+            const data = await makeRiotRequest(this.API_KEY, url);
+            
+            if (data.length === 0) break;
+            
+            allSummonerIds.push(...data.map(entry => entry.summonerId));
+            page++;
+        }
+    
+        return allSummonerIds;
     }
 
     async getPUUID(summonerId) {
         const url = `${this.BASE_URL}/lol/summoner/v4/summoners/${summonerId}`;
-        const response = await axios.get(url, { headers: getRiotHeaders(this.API_KEY) });
-        return response.data.puuid;
+        const data = await makeRiotRequest(this.API_KEY, url);
+        return data.puuid;
     }
     
     async getGameNameAndTagLine(puuid) {
         const url = `${this.RIOT_URL}/riot/account/v1/accounts/by-puuid/${puuid}`;
-        const response = await axios.get(url, { headers: getRiotHeaders(this.API_KEY) });
+        const data = await makeRiotRequest(this.API_KEY, url);
         return {
-            gameName: response.data.gameName,
-            tagLine: response.data.tagLine
+            gameName: data.gameName,
+            tagLine: data.tagLine
         };
     }
 }
