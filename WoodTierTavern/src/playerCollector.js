@@ -5,10 +5,11 @@ const { getApiKey, delay, writeJsonToFile, updateProgress, makeRiotRequest } = r
 class PlayerCollector {
     constructor() {
         this.API_KEY = null;
+        this.NUM_PLAYER_PAGES = 1;
+        this.DELAY_BETWEEN_REQUESTS = 1350;
+        this.DIVISIONS = ['I', 'II', 'III', 'IV'];
         this.BASE_URL = 'https://na1.api.riotgames.com';
         this.RIOT_URL = 'https://americas.api.riotgames.com';
-        this.DIVISIONS = ['I', 'II', 'III', 'IV'];
-        this.DELAY_BETWEEN_REQUESTS = 1500;
     }
 
     async start() {
@@ -72,9 +73,8 @@ class PlayerCollector {
     async getSummonerIds(division) {
         const allSummonerIds = [];
         let page = 1;
-        const maxPages = 25;
     
-        while (page <= maxPages) {
+        while (page <= this.NUM_PLAYER_PAGES) {
             const url = `${this.BASE_URL}/lol/league/v4/entries/RANKED_SOLO_5x5/IRON/${division}?page=${page}`;
             const data = await makeRiotRequest(this.API_KEY, url);
             

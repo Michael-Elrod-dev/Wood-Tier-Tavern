@@ -5,9 +5,10 @@ const { getApiKey, delay, readPlayerFile, shuffleList, updateProgress, makeRiotR
 class GameFetcher {
     constructor() {
         this.API_KEY = null;
+        this.MIN_GAME_DURATION = 1800;
+        this.DELAY_BETWEEN_CHECKS = 1350;
         this.BASE_URL = 'https://na1.api.riotgames.com';
         this.AMERICAS_URL = 'https://americas.api.riotgames.com';
-        this.DELAY_BETWEEN_CHECKS = 1300;
         this.IRON_FILES = [
             '../files/iron_i_players.json',
             '../files/iron_ii_players.json',
@@ -30,7 +31,7 @@ class GameFetcher {
                     return { found: false };
                 }
     
-                if (response.gameLength <= 180) {
+                if (response.gameLength <= this.MIN_GAME_DURATION) {
                     return {
                         found: true,
                         gameId: response.gameId,
@@ -77,18 +78,17 @@ class GameFetcher {
                 const leagueClient = new LeagueClient();
                 try {
                     await leagueClient.startSpectate(gameInfo);
-                    return;
+                    return true;
                 } catch (error) {
                     console.error('Failed to spectate game:', error.message);
-                    console.log('Ending search due to found game, even though spectate failed');
-                    return;
+                    return false;
                 }
             } else {
-                await this.checkPlayers(players.slice(1), count + 1);
+                return await this.checkPlayers(players.slice(1), count + 1);
             }
         } catch (error) {
             console.error('\nError checking player:', error);
-            await this.checkPlayers(players.slice(1), count + 1);
+            return await this.checkPlayers(players.slice(1), count + 1);
         }
     }
 
@@ -107,7 +107,8 @@ class GameFetcher {
         }
     
         const shuffledPlayers = shuffleList(allPlayers);
-        await this.checkPlayers(shuffledPlayers, 0);
+        const result = await this.checkPlayers(shuffledPlayers, 0);
+        return result;
     }
 }
 

@@ -92,26 +92,13 @@ async function makeRiotRequest(apiKey, url, method = 'GET', payload = null) {
         },
         data: payload
     };
-
-    try {
-        const response = await axios(config);
-        return response.data;
-    } catch (error) {
-        console.log('API error:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data
-        });
-        throw error;
-    }
+    const response = await axios(config);
+    return response.data;
 }
 
 async function makeLcuRequest(credentials, method, endpoint, payload = null) {
     const url = `https://127.0.0.1:${credentials.port}${endpoint}`;
     const auth = Buffer.from(`riot:${credentials.auth}`).toString('base64');
-    
-    // console.log(`Making request to: ${url}`);
-    // console.log('Using auth token:', auth);
     
     const config = {
         method,
@@ -130,12 +117,14 @@ async function makeLcuRequest(credentials, method, endpoint, payload = null) {
         const response = await axios(config);
         return response.data;
     } catch (error) {
-        console.log('Full error:', {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            message: error.message
-        });
+        if (error.response?.status !== 404) {
+            console.log('Full error:', {
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                data: error.response?.data,
+                message: error.message
+            });
+        }
         throw new Error(`LCU request failed: ${error.response?.status} ${error.response?.statusText}`);
     }
 }

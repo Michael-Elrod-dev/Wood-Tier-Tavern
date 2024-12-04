@@ -79,7 +79,7 @@ class LeagueClient {
                 '/lol-spectator/v1/spectate/launch',
                 payload
             );
-    
+                        
             // console.log('\nSpectate launch response:', JSON.stringify(response, null, 2));
             return response;
         } catch (error) {
