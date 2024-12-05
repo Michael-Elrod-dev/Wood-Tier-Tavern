@@ -5,12 +5,14 @@ const axios = require('axios');
 const https = require('https');
 const fs = require('fs/promises');
 
+const FILE_PATH = "../files/";
+
 async function getApiKey() {
     try {
-        const API_KEY = (await fs.readFile('../files/api_key.txt', 'utf8')).trim();
+        const API_KEY = (await fs.readFile(`${FILE_PATH}api_key.txt`, 'utf8')).trim();
         return API_KEY;
     } catch (error) {
-        throw new Error('API key not found in ../files/api_key.txt');
+        throw new Error(`API key not found in ${FILE_PATH}api_key.txt`);
     }
 }
 
@@ -129,6 +131,23 @@ async function makeLcuRequest(credentials, method, endpoint, payload = null) {
     }
 }
 
+async function makeLiveGameRequest(method, endpoint, payload = null) {
+    const baseUrl = 'https://127.0.0.1:2999';
+    const config = {
+        method,
+        url: `${baseUrl}${endpoint}`,
+        httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+        data: payload
+    };
+
+    try {
+        const response = await axios(config);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
     getApiKey,
     delay,
@@ -138,5 +157,6 @@ module.exports = {
     shuffleList,
     updateProgress,
     makeRiotRequest,
-    makeLcuRequest
+    makeLcuRequest,
+    makeLiveGameRequest
 };

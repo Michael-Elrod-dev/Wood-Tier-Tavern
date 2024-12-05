@@ -1,3 +1,4 @@
+// playerCollector.js
 const path = require('path');
 const fs = require('fs/promises');
 const { getApiKey, delay, writeJsonToFile, updateProgress, makeRiotRequest } = require('./utils');
@@ -6,6 +7,7 @@ class PlayerCollector {
     constructor() {
         this.API_KEY = null;
         this.NUM_PLAYER_PAGES = 1;
+        this.FILE_PATH = "../files/";
         this.DELAY_BETWEEN_REQUESTS = 1350;
         this.DIVISIONS = ['I', 'II', 'III', 'IV'];
         this.BASE_URL = 'https://na1.api.riotgames.com';
@@ -15,7 +17,7 @@ class PlayerCollector {
     async start() {
         try {
             this.API_KEY = await getApiKey();
-            await fs.mkdir('../files', { recursive: true });
+            await fs.mkdir(`${this.FILE_PATH}`, { recursive: true });
             await this.collectPlayers();
         } catch (error) {
             console.error('Failed to start:', error.message);
@@ -29,7 +31,7 @@ class PlayerCollector {
     }
 
     async collectDivision(division) {
-        const filename = path.join('../files', `iron_${division.toLowerCase()}_players.json`);
+        const filename = path.join(`${this.FILE_PATH}`, `iron_${division.toLowerCase()}_players.json`);
         console.log(`\nStarting Iron ${division} collection...`);
 
         try {

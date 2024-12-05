@@ -5,15 +5,16 @@ const { getApiKey, delay, readPlayerFile, shuffleList, updateProgress, makeRiotR
 class GameFetcher {
     constructor() {
         this.API_KEY = null;
-        this.MIN_GAME_DURATION = 1800;
+        this.FILE_PATH = "../files/";
+        this.MIN_GAME_DURATION = 900;
         this.DELAY_BETWEEN_CHECKS = 1350;
         this.BASE_URL = 'https://na1.api.riotgames.com';
         this.AMERICAS_URL = 'https://americas.api.riotgames.com';
         this.IRON_FILES = [
-            '../files/iron_i_players.json',
-            '../files/iron_ii_players.json',
-            '../files/iron_iii_players.json',
-            '../files/iron_iv_players.json'
+            `${this.FILE_PATH}iron_i_players.json`,
+            `${this.FILE_PATH}iron_ii_players.json`,
+            `${this.FILE_PATH}iron_iii_players.json`,
+            `${this.FILE_PATH}iron_iv_players.json`
         ];
     }
 
@@ -31,7 +32,7 @@ class GameFetcher {
                     return { found: false };
                 }
     
-                if (response.gameLength <= this.MIN_GAME_DURATION) {
+                if (response.gameLength >= this.MIN_GAME_DURATION) {
                     return {
                         found: true,
                         gameId: response.gameId,

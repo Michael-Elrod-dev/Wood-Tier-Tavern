@@ -90,7 +90,7 @@ class TokenManager {
                 password: 'oauth:' + this.tokens.AccessToken
             },
             channels: [
-                'woodtiertavern'
+                'woodtiertavern',
             ],
             options: {
                 clientId: this.tokens.ClientID
